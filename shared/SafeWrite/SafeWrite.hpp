@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 DECLSPEC_NOINLINE void SafeWrite8(SIZE_T addr, SIZE_T data);
 DECLSPEC_NOINLINE void SafeWrite16(SIZE_T addr, SIZE_T data);
 DECLSPEC_NOINLINE void SafeWrite32(SIZE_T addr, SIZE_T data);

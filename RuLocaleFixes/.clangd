@@ -1,0 +1,5 @@
+CompileFlags:
+  Add: 
+    - -Wno-unused-parameter
+    - -m32
+    - -target=i686-pc-windows-msvc
