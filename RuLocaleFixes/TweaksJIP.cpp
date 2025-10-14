@@ -1,5 +1,16 @@
 #include "PatternFinder.hpp"
+#include "RuLocaleFixes/DbgSymbols.hpp"
+#include "RuLocaleFixes/utils.hpp"
 #include "shared/SafeWrite/SafeWrite.hpp"
+
+using HandleInputKey_t = bool(__fastcall *)(void *menu, unsigned int inputKey);
+HandleInputKey_t OrigHandleInputKey = nullptr;
+
+bool __fastcall HookHandleInputKey(void *menu, unsigned int inputKey)
+{
+    unsigned int convertedKey = TranslateKeyToCP1251(inputKey);
+    return OrigHandleInputKey(menu, convertedKey);
+}
 
 namespace TweaksJIP
 {
@@ -7,7 +18,9 @@ void Apply()
 {
     if (!GetModuleHandle("jip_nvse.dll")) return;
 
+    DbgSymbols resolver("jip_nvse.dll");
     PatternFinder::Scanner search("jip_nvse.dll");
+    ResolveAndHook(resolver, "HandleInputKey", HookHandleInputKey, reinterpret_cast<void **>(&OrigHandleInputKey));
 
     struct Patch
     {
@@ -26,28 +39,28 @@ void Apply()
         }
     };
 
-    // using ё here to match byte length of original, it doesn't display in the game
-    constexpr uint8_t atRu[] = {0xE2, 0x20, 0xB8, 0x00}; // "в "
+    // using С‘ here to match byte length of original, it doesn't display in the game
+    constexpr uint8_t atRu[] = {0xE2, 0x20, 0xB8, 0x00}; // "РІ "
     Patch inAtPatches[] = {
         {"61 74 20 00", atRu, sizeof(atRu)},
         {"69 6E 20 00", atRu, sizeof(atRu)},
     };
     batchPatch(inAtPatches, _countof(inAtPatches));
 
-    // в неизвестной локации
+    // РІ РЅРµРёР·РІРµСЃС‚РЅРѕР№ Р»РѕРєР°С†РёРё
     // at an unknown location
     constexpr uint8_t unknownRu[] = {0xE2, 0x20, 0xED, 0xE5, 0xE8, 0xE7, 0xE2, 0xE5, 0xF1, 0xF2, 0xED, 0xEE, 0xE9, 0x20, 0xEB, 0xEE, 0xEA, 0xE0, 0xF6, 0xE8, 0xE8, 0x00};
     Patch unkPatches[] = {{"61 74 20 61 6E 20 75 6E 6B 6E 6F 77 6E 20 6C 6F 63 61 74 69 6F 6E 00", unknownRu, sizeof(unknownRu)}};
     batchPatch(unkPatches, _countof(unkPatches));
 
-    constexpr uint8_t eastRu[] = {0xC2, 0xEE, 0xF1, 0xF2, 0xEE, 0xEA, 0x20, 0x00}; // "Восток "
-    constexpr uint8_t westRu[] = {0xE7, 0xE0, 0xEF, 0xE0, 0xE4, 0x20, 0x00};       // "Запад "
-    constexpr uint8_t northRu[] = {0xD1, 0xE5, 0xE2, 0xE5, 0xF0, 0x20, 0x00};      // "Север "
-    constexpr uint8_t southRu[] = {0xDE, 0xE3, 0x20, 0x00};                        // "Юг "
-    constexpr uint8_t neRu[] = {0xD1, 0xC2, 0x20, 0x00};                           // "СВ "
-    constexpr uint8_t seRu[] = {0xDE, 0xC2, 0x20, 0x00};                           // "ЮВ "
-    constexpr uint8_t nwRu[] = {0xD1, 0xD7, 0x20, 0x00};                           // "СЗ "
-    constexpr uint8_t swRu[] = {0xDE, 0xD7, 0x20, 0x00};                           // "ЮЗ "
+    constexpr uint8_t eastRu[] = {0xC2, 0xEE, 0xF1, 0xF2, 0xEE, 0xEA, 0x20, 0x00}; // "Р’РѕСЃС‚РѕРє "
+    constexpr uint8_t westRu[] = {0xE7, 0xE0, 0xEF, 0xE0, 0xE4, 0x20, 0x00};       // "Р—Р°РїР°Рґ "
+    constexpr uint8_t northRu[] = {0xD1, 0xE5, 0xE2, 0xE5, 0xF0, 0x20, 0x00};      // "РЎРµРІРµСЂ "
+    constexpr uint8_t southRu[] = {0xDE, 0xE3, 0x20, 0x00};                        // "Р®Рі "
+    constexpr uint8_t neRu[] = {0xD1, 0xC2, 0x20, 0x00};                           // "РЎР’ "
+    constexpr uint8_t seRu[] = {0xDE, 0xC2, 0x20, 0x00};                           // "Р®Р’ "
+    constexpr uint8_t nwRu[] = {0xD1, 0xD7, 0x20, 0x00};                           // "РЎР— "
+    constexpr uint8_t swRu[] = {0xDE, 0xD7, 0x20, 0x00};                           // "Р®Р— "
 
     Patch directions[] = {
         {"45 61 73 74 20 6F 66 20 00", eastRu, sizeof(eastRu)},
@@ -62,7 +75,7 @@ void Apply()
     batchPatch(directions, _countof(directions));
 
     // The Big Guns skill determines your combat effectiveness with all oversized weapons such as the Fat Man, Missile Launcher, Flamer, Minigun, Gatling Laser, etc.
-    // Навык "Тяжелое оружие" определяет эффективность владения крупногабаритным вооружением, таким как "Толстяк", гранатомет, огнемет, миниган, гатлинг-лазер и др.
+    // РќР°РІС‹Рє "РўСЏР¶РµР»РѕРµ РѕСЂСѓР¶РёРµ" РѕРїСЂРµРґРµР»СЏРµС‚ СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ РІР»Р°РґРµРЅРёСЏ РєСЂСѓРїРЅРѕРіР°Р±Р°СЂРёС‚РЅС‹Рј РІРѕРѕСЂСѓР¶РµРЅРёРµРј, С‚Р°РєРёРј РєР°Рє "РўРѕР»СЃС‚СЏРє", РіСЂР°РЅР°С‚РѕРјРµС‚, РѕРіРЅРµРјРµС‚, РјРёРЅРёРіР°РЅ, РіР°С‚Р»РёРЅРі-Р»Р°Р·РµСЂ Рё РґСЂ.
     constexpr uint8_t bigGunsRu[] = {
         0xCD, 0xE0, 0xE2, 0xFB, 0xEA, 0x20, 0x22, 0xD2, 0xFF, 0xE6, 0xE5, 0xEB,
         0xEE, 0xE5, 0x20, 0xEE, 0xF0, 0xF3, 0xE6, 0xE8, 0xE5, 0x22, 0x20, 0xEE,

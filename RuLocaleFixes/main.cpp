@@ -8,7 +8,7 @@
 #include <shared/Defines.hpp>
 #include <shared/NVSEManager/NVSEGlobalManager.hpp>
 
-#define VERSION 200
+#define VERSION 210
 
 using NameInput_t = int(__fastcall *)(int a1, int a2, int a3);
 NameInput_t OrigNameInput = nullptr;
