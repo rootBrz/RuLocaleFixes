@@ -3,6 +3,7 @@
 #include "MinHook.h"
 #include <atlconv.h>
 #include <string>
+#include <unordered_map>
 #include <windows.h>
 
 void ResolveAndHook(DbgSymbols &resolver, const char *funcName, void *hook, void **trump)
@@ -17,9 +18,16 @@ void ResolveAndHook(DbgSymbols &resolver, const char *funcName, void *hook, void
     MH_EnableHook(pAddr);
 }
 
-int FastToLower(int c)
+int __cdecl FastToUpper(int key)
 {
-    return ((c >= 0x41 && c <= 0x5A) || (c >= 0xC0 && c <= 0xDF)) ? c + 0x20 : c;
+    unsigned char c = (unsigned char)key;
+    return (c >= 0x61 && c <= 0x7A) || (c >= 0xE0 && c <= 0xFF) ? c - 0x20 : c;
+}
+
+int __cdecl FastToLower(int key)
+{
+    unsigned char c = (unsigned char)key;
+    return (c >= 0x41 && c <= 0x5A) || (c >= 0xC0 && c <= 0xDF) ? c + 0x20 : c;
 }
 
 void ConvertStdStringUtf8ToCp1251(std::string &str)
@@ -46,139 +54,80 @@ unsigned int TranslateKeyToCP1251(unsigned int key)
     if (key <= 0x1F || key == 0x7F || langId != LANG_RUSSIAN || GetAsyncKeyState(VK_CONTROL) & 0x8000 || GetAsyncKeyState(VK_MENU) & 0x8000)
         return key;
 
-    switch (key)
-    {
-    case 'a':
-        return 0xF4;
-    case 'b':
-        return 0xE8;
-    case 'c':
-        return 0xF1;
-    case 'd':
-        return 0xE2;
-    case 'e':
-        return 0xF3;
-    case 'f':
-        return 0xE0;
-    case 'g':
-        return 0xEF;
-    case 'h':
-        return 0xF0;
-    case 'i':
-        return 0xF8;
-    case 'j':
-        return 0xEE;
-    case 'k':
-        return 0xEB;
-    case 'l':
-        return 0xE4;
-    case 'm':
-        return 0xFC;
-    case 'n':
-        return 0xF2;
-    case 'o':
-        return 0xF9;
-    case 'p':
-        return 0xE7;
-    case 'q':
-        return 0xE9;
-    case 'r':
-        return 0xEA;
-    case 's':
-        return 0xFB;
-    case 't':
-        return 0xE5;
-    case 'u':
-        return 0xE3;
-    case 'v':
-        return 0xEC;
-    case 'w':
-        return 0xF6;
-    case 'x':
-        return 0xF7;
-    case 'y':
-        return 0xED;
-    case 'z':
-        return 0xFF;
+    std::unordered_map<char, unsigned int> keyMap =
+        {
+            {'a', 0xF4},
+            {'b', 0xE8},
+            {'c', 0xF1},
+            {'d', 0xE2},
+            {'e', 0xF3},
+            {'f', 0xE0},
+            {'g', 0xEF},
+            {'h', 0xF0},
+            {'i', 0xF8},
+            {'j', 0xEE},
+            {'k', 0xEB},
+            {'l', 0xE4},
+            {'m', 0xFC},
+            {'n', 0xF2},
+            {'o', 0xF9},
+            {'p', 0xE7},
+            {'q', 0xE9},
+            {'r', 0xEA},
+            {'s', 0xFB},
+            {'t', 0xE5},
+            {'u', 0xE3},
+            {'v', 0xEC},
+            {'w', 0xF6},
+            {'x', 0xF7},
+            {'y', 0xED},
+            {'z', 0xFF},
+            {'A', 0xD4},
+            {'B', 0xC8},
+            {'C', 0xD1},
+            {'D', 0xC2},
+            {'E', 0xD3},
+            {'F', 0xC0},
+            {'G', 0xCF},
+            {'H', 0xD0},
+            {'I', 0xD8},
+            {'J', 0xCE},
+            {'K', 0xCB},
+            {'L', 0xC4},
+            {'M', 0xDC},
+            {'N', 0xD2},
+            {'O', 0xD9},
+            {'P', 0xC7},
+            {'Q', 0xC9},
+            {'R', 0xCA},
+            {'S', 0xDB},
+            {'T', 0xC5},
+            {'U', 0xC3},
+            {'V', 0xCC},
+            {'W', 0xD6},
+            {'X', 0xD7},
+            {'Y', 0xCD},
+            {'Z', 0xDF},
+            {',', 0xE1},
+            {'.', 0xFE},
+            {'<', 0xC1},
+            {'>', 0xDE},
+            {';', 0xE6},
+            {':', 0xC6},
+            {'\'', 0xFD},
+            {'"', 0xDD},
+            {'[', 0xF5},
+            {']', 0xFA},
+            {'{', 0xD5},
+            {'}', 0xDA},
+            {'@', '"'},
+            {'$', ';'},
+            {'^', ':'},
+            {'&', '?'},
+            {'/', '.'},
+            {'?', ','},
+        };
 
-    case 'A':
-        return 0xD4;
-    case 'B':
-        return 0xC8;
-    case 'C':
-        return 0xD1;
-    case 'D':
-        return 0xC2;
-    case 'E':
-        return 0xD3;
-    case 'F':
-        return 0xC0;
-    case 'G':
-        return 0xCF;
-    case 'H':
-        return 0xD0;
-    case 'I':
-        return 0xD8;
-    case 'J':
-        return 0xCE;
-    case 'K':
-        return 0xCB;
-    case 'L':
-        return 0xC4;
-    case 'M':
-        return 0xDC;
-    case 'N':
-        return 0xD2;
-    case 'O':
-        return 0xD9;
-    case 'P':
-        return 0xC7;
-    case 'Q':
-        return 0xC9;
-    case 'R':
-        return 0xCA;
-    case 'S':
-        return 0xDB;
-    case 'T':
-        return 0xC5;
-    case 'U':
-        return 0xC3;
-    case 'V':
-        return 0xCC;
-    case 'W':
-        return 0xD6;
-    case 'X':
-        return 0xD7;
-    case 'Y':
-        return 0xCD;
-    case 'Z':
-        return 0xDF;
-
-    case ',':
-        return 0xE1;
-    case '.':
-        return 0xFE;
-    case '<':
-        return 0xC1;
-    case '>':
-        return 0xDE;
-    case ';':
-        return 0xE6;
-    case ':':
-        return 0xC6;
-    case '\'':
-        return 0xFD;
-    case '"':
-        return 0xDD;
-    case '[':
-        return 0xF5;
-    case ']':
-        return 0xFA;
-    case '{':
-        return 0xD5;
-    case '}':
-        return 0xDA;
-    }
-
-    return key;
+    auto keyElement = keyMap.find(key);
+    return keyElement != keyMap.end() ? keyElement->second : key;
 }

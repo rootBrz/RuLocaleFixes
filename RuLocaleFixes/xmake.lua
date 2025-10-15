@@ -1,5 +1,5 @@
 set_project("RuLocaleFixes")
-set_version("2.1")
+set_version("2.2")
 
 set_languages("cxx20")
 set_warnings("all")

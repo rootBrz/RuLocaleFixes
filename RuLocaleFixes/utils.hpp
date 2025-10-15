@@ -6,7 +6,8 @@
 
 unsigned int TranslateKeyToCP1251(unsigned int key);
 void ConvertStdStringUtf8ToCp1251(std::string &strPtr);
-int FastToLower(int c);
+int __cdecl FastToUpper(int c);
+int __cdecl FastToLower(int c);
 void ResolveAndHook(DbgSymbols &resolver, const char *funcName, void *hook, void **trump);
 
 inline void *instance = nullptr;
